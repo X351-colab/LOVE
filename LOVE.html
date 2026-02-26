@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>宝宝我错了😭</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        html,body {
+            width: 100%;
+            height: 100%;
+            background: #fdf6f8;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .box {
+            background: #fff;
+            width: 90%;
+            max-width: 370px;
+            border-radius: 22px;
+            padding: 38px 26px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.16);
+        }
+        .title {
+            font-size: 23px;
+            color: #e65c7d;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .content {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            min-height: 66px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 11px;
+        }
+        .btn {
+            flex: 1;
+            padding: 13px 0;
+            border-radius: 12px;
+            font-size: 15px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .forgive {
+            background: #e65c7d;
+            color: #fff;
+        }
+        .refuse {
+            background: #f2f2f2;
+            color: #666;
+        }
+
+        #fireworksPage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f0f1e;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            color: #fff;
+            text-align: center;
+            padding: 25px 20px;
+        }
+        #fireworksCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .text-wrapper {
+            z-index: 2;
+            max-width: 500px;
+            line-height: 1.9;
+            font-size: 16px;
+            color: #ffeef2;
+            text-shadow: 0 0 6px #e65c7d;
+            white-space: pre-line;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div id="fireworksPage">
+    <canvas id="fireworksCanvas"></canvas>
+    <div class="text-wrapper" id="typeText"></div>
+</div>
+
+<script>
+    const texts = [
+        "宝宝，我真的错了，我不该不及时哄你，让你一个人难过委屈，我心都疼了，原谅我好不好？",
+        "宝宝，我知道你等了我好久，我却没立刻哄你，是我最不对，你别再生气了，我真的特别后悔。",
+        "宝宝，我不该让你带着坏情绪自己扛，我本该马上抱紧你哄你，我太粗心了，求求你原谅我嘛。",
+        "宝宝，你不理我的每一秒我都超级慌，都怪我没有第一时间哄你，让你受委屈，你理理我好不好？",
+        "宝宝，我反思了好久，全是我的问题，我没有顾及你的感受，没有及时哄你，我真的知错了。",
+        "宝宝，我不该冷着你，不该让你等我的安慰，我真的很爱你很在乎你，只是我笨，原谅我这一次。",
+        "宝宝，一想到你偷偷难过我就特别自责，都怪我没及时哄你，我保证再也不会这样了，原谅我嘛。",
+        "宝宝，我错在反应太慢，不够贴心，让你委屈那么久，我真的混蛋，你别再跟我置气了好不好？",
+        "宝宝，你要的只是我立刻的在乎和拥抱，我却没做到，让你失望了，我真的特别愧疚，原谅我。",
+        "宝宝，我不想让你带着委屈过夜，更不想失去你，都是我没及时哄你，我错得彻底，求你原谅。",
+        "宝宝，我保证以后你一不开心我就秒哄，绝不拖延、绝不冷着你，我一定说到做到，原谅我嘛。",
+        "宝宝，我真的特别心疼你，所有委屈都是我造成的，我没及时哄你，我真的错到底了，别生气了。",
+        "宝宝，你不原谅我我做什么都没心思，满脑子都是你，都怪我没及时哄你，你就心软一次好不好？",
+        "宝宝，我愿意一直低头一直哄你，只要你消气，我怎么做都愿意，只因为我没及时哄你，我错了。",
+        "宝宝，我真的不能没有你，更不能让你一直伤心，都是我不好，没及时哄你，求你原谅我这一次。",
+        "宝宝，我以后一定把你的情绪放在第一位，你一难过我就马上哄，绝对不让你独自受委屈，原谅我。",
+        "宝宝，我知道冷着你最伤你心，我真的意识到错了，再也不会犯，宝宝你就原谅我嘛好不好？",
+        "宝宝，我不该让你觉得我不在乎你，我真的很在乎，只是这次没做好，没及时哄你，我真的改。",
+        "宝宝，你生气我比谁都难受，我恨我自己没有立刻哄你，让你受了那么多委屈，我真的会改。",
+        "宝宝，我不想我们一直僵着，我真的很在意你，都怪我没及时哄你，你就稍微原谅我一点点嘛。",
+        "宝宝，我真的特别特别需要你原谅我，我再也不会让你等、让你难过、让你独自受委屈了，原谅我。",
+        "宝宝，都怪我太迟钝，没有第一时间安抚你，让你伤心了，我真的特别后悔，求宝宝原谅我。",
+        "宝宝，我保证以后不管对错，我都先哄你，永远不让你受冷遇，不让你独自难过，原谅我好不好？",
+        "宝宝，我真的知道自己错得很离谱，没有及时哄你，让你受了不该受的委屈，我真的会牢牢记住。",
+        "宝宝，你就别再生气啦，我真的错了，以后一定秒回秒哄，绝对不让你再受一点点委屈，原谅我。",
+        "宝宝，我一想到你因为我不开心，我就特别难受，都怪我没及时哄你，我真的改，你原谅我嘛。",
+        "宝宝，我真的很怕你一直不理我，都怪我没有第一时间哄你，让你失望，我真的会改，求你原谅。",
+        "宝宝，我愿意一直跟你道歉，一直哄你，直到你消气为止，只要你不生气，我怎么都愿意，原谅我。",
+        "宝宝，我真的错了错了错了，不该不及时哄你，不该让你一个人委屈，你就原谅我这一次好不好？",
+        "宝宝，我以后一定做最贴心的人，你一不开心我就马上哄，绝对不冷落你，绝对不让你难过，原谅我。"
+    ];
+
+    const finalEssay = `
+亲爱的宝宝，谢谢你愿意原谅我这一次。
+
+我真的深刻意识到，我最大的错误就是没有第一时间哄你，让你独自委屈、独自难过、独自等待，让你觉得我不在乎你、不心疼你，这是我最不应该做的事情。
+
+我保证，从今天开始，我永远把你的情绪放在第一位，你一不开心，我立刻低头、立刻道歉、立刻哄你，绝对不会再冷着你、敷衍你、让你一个人扛所有坏情绪。
+
+你是我最在意、最想珍惜的人，我不想再因为我的迟钝和粗心，让你受一点点委屈。
+
+往后所有温柔、所有偏爱、所有耐心，全都只给你一个人，我会好好爱你，好好陪着你，再也不会让你失望。
+
+我爱你，我的宝宝。❤️
+    `;
+
+    let index = 0;
+    addModal();
+
+    function addModal() {
+        let m = document.createElement('div');
+        m.className = 'modal';
+        let offsetX = (Math.random() - 0.5) * 120;
+        let offsetY = (Math.random() - 0.5) * 120;
+        m.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        let txt = texts[index % texts.length];
+        index++;
+        m.innerHTML = `
+        <div class="box">
+            <div class="title">宝宝，我错了</div>
+            <div class="content">${txt}</div>
+            <div class="btn-group">
+                <button class="btn forgive" onclick="forgiveAll()">原谅我</button>
+                <button class="btn refuse" onclick="addModal()">还是生气</button>
+            </div>
+        </div>`;
+        document.body.appendChild(m);
+    }
+
+    function forgiveAll() {
+        document.querySelectorAll('.modal').forEach(e => e.remove());
+        document.getElementById('fireworksPage').style.display = 'flex';
+        startFireworks();
+        startType();
+    }
+
+    // 打字更慢
+    function startType() {
+        let el = document.getElementById('typeText');
+        let i = 0;
+        el.innerText = '';
+        function ty() {
+            if (i < finalEssay.length) {
+                el.innerText += finalEssay.charAt(i);
+                i++;
+                setTimeout(ty, 80);
+            }
+        }
+        ty();
+    }
+
+    // ===================== 全屏烟花：从底飞到顶，全屏幕铺满绽放 =====================
+    function startFireworks() {
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Firework {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height;
+                // 飞得更高：直到接近屏幕顶端才爆炸
+                this.vy = -(Math.random() * 2.5 + 4);
+                this.vx = (Math.random() - 0.5) * 2.2;
+                this.color = `hsl(${Math.random() * 360},75%,60%)`;
+                // 绽放高度：几乎到屏幕最顶端
+                this.maxY = 20 + Math.random() * (canvas.height * 0.15);
+            }
+            update() {
+                this.vy += 0.05;
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+            burst() {
+                return this.y <= this.maxY || this.vy >= -0.2;
+            }
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x,y,c){
+                this.x=x;this.y=y;
+                this.vx=(Math.random()-0.5)*11;
+                this.vy=(Math.random()-0.5)*11;
+                this.c=c;this.life=1;
+            }
+            update(){
+                this.vy+=0.08;
+                this.x+=this.vx;
+                this.y+=this.vy;
+                this.life-=0.007;
+            }
+            draw(){
+                if(this.life<=0)return;
+                ctx.save();
+                ctx.globalAlpha=this.life;
+                ctx.fillStyle=this.c;
+                ctx.beginPath();
+                ctx.arc(this.x,this.y,1.8,0,Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        let fw=[],pt=[];
+        function loop(){
+            ctx.fillStyle='rgba(15,15,30,0.1)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            if(Math.random()>0.92) fw.push(new Firework());
+
+            for(let i=fw.length-1;i>=0;i--){
+                let f=fw[i];f.update();f.draw();
+                if(f.burst()){
+                    fw.splice(i,1);
+                    for(let j=0;j<80;j++) pt.push(new Particle(f.x,f.y,f.color));
+                }
+            }
+            for(let i=pt.length-1;i>=0;i--){
+                let p=pt[i];p.update();p.draw();
+                if(p.life<=0) pt.splice(i,1);
+            }
+            requestAnimationFrame(loop);
+        }
+        loop();
+        window.onresize=()=>{canvas.width=innerWidth;canvas.height=innerHeight;};
+    }
+</script>
+</body>
+</html>
